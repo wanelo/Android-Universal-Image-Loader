@@ -21,6 +21,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
+
 import com.nostra13.universalimageloader.cache.disc.DiskCache;
 import com.nostra13.universalimageloader.cache.memory.MemoryCache;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -224,7 +225,7 @@ public class ImageLoader {
 			} else {
 				imageAware.setImageDrawable(null);
 			}
-			listener.onLoadingComplete(uri, imageAware.getWrappedView(), null);
+			listener.onLoadingComplete(uri, imageAware.getWrappedView(), null, null);
 			return;
 		}
 
@@ -250,7 +251,7 @@ public class ImageLoader {
 				}
 			} else {
 				options.getDisplayer().display(bmp, imageAware, LoadedFrom.MEMORY_CACHE);
-				listener.onLoadingComplete(uri, imageAware.getWrappedView(), bmp);
+				listener.onLoadingComplete(uri, imageAware.getWrappedView(), bmp, LoadedFrom.MEMORY_CACHE);
 			}
 		} else {
 			if (options.shouldShowImageOnLoading()) {
@@ -367,7 +368,7 @@ public class ImageLoader {
 
 	/**
 	 * Adds load image task to execution pool. Image will be returned with
-	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap)} callback}.
+	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}.
 	 * <br />
 	 * <b>NOTE:</b> {@link #init(ImageLoaderConfiguration)} method must be called before this method call
 	 *
@@ -382,14 +383,14 @@ public class ImageLoader {
 
 	/**
 	 * Adds load image task to execution pool. Image will be returned with
-	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap)} callback}.
+	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}.
 	 * <br />
 	 * <b>NOTE:</b> {@link #init(ImageLoaderConfiguration)} method must be called before this method call
 	 *
 	 * @param uri             Image URI (i.e. "http://site.com/image.png", "file:///mnt/sdcard/image.png")
 	 * @param targetImageSize Minimal size for {@link Bitmap} which will be returned in
 	 *                        {@linkplain ImageLoadingListener#onLoadingComplete(String, android.view.View,
-	 *                        android.graphics.Bitmap)} callback}. Downloaded image will be decoded
+	 *                        android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}. Downloaded image will be decoded
 	 *                        and scaled to {@link Bitmap} of the size which is <b>equal or larger</b> (usually a bit
 	 *                        larger) than incoming targetImageSize.
 	 * @param listener        {@linkplain ImageLoadingListener Listener} for image loading process. Listener fires
@@ -402,7 +403,7 @@ public class ImageLoader {
 
 	/**
 	 * Adds load image task to execution pool. Image will be returned with
-	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap)} callback}.
+	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}.
 	 * <br />
 	 * <b>NOTE:</b> {@link #init(ImageLoaderConfiguration)} method must be called before this method call
 	 *
@@ -421,14 +422,14 @@ public class ImageLoader {
 
 	/**
 	 * Adds load image task to execution pool. Image will be returned with
-	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap)} callback}.
+	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}.
 	 * <br />
 	 * <b>NOTE:</b> {@link #init(ImageLoaderConfiguration)} method must be called before this method call
 	 *
 	 * @param uri             Image URI (i.e. "http://site.com/image.png", "file:///mnt/sdcard/image.png")
 	 * @param targetImageSize Minimal size for {@link Bitmap} which will be returned in
 	 *                        {@linkplain ImageLoadingListener#onLoadingComplete(String, android.view.View,
-	 *                        android.graphics.Bitmap)} callback}. Downloaded image will be decoded
+	 *                        android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}. Downloaded image will be decoded
 	 *                        and scaled to {@link Bitmap} of the size which is <b>equal or larger</b> (usually a bit
 	 *                        larger) than incoming targetImageSize.
 	 * @param options         {@linkplain com.nostra13.universalimageloader.core.DisplayImageOptions Options} for image
@@ -446,14 +447,14 @@ public class ImageLoader {
 
 	/**
 	 * Adds load image task to execution pool. Image will be returned with
-	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap)} callback}.
+	 * {@link ImageLoadingListener#onLoadingComplete(String, android.view.View, android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}.
 	 * <br />
 	 * <b>NOTE:</b> {@link #init(ImageLoaderConfiguration)} method must be called before this method call
 	 *
 	 * @param uri              Image URI (i.e. "http://site.com/image.png", "file:///mnt/sdcard/image.png")
 	 * @param targetImageSize  Minimal size for {@link Bitmap} which will be returned in
 	 *                         {@linkplain ImageLoadingListener#onLoadingComplete(String, android.view.View,
-	 *                         android.graphics.Bitmap)} callback}. Downloaded image will be decoded
+	 *                         android.graphics.Bitmap, com.nostra13.universalimageloader.core.assist.LoadedFrom)} callback}. Downloaded image will be decoded
 	 *                         and scaled to {@link Bitmap} of the size which is <b>equal or larger</b> (usually a bit
 	 *                         larger) than incoming targetImageSize.
 	 * @param options          {@linkplain com.nostra13.universalimageloader.core.DisplayImageOptions Options} for image
@@ -557,6 +558,34 @@ public class ImageLoader {
 		loadImage(uri, targetImageSize, options, listener);
 		return listener.getLoadedBitmap();
 	}
+
+    public void preloadImage(String uri, DisplayImageOptions options, ImageLoadingListener listener) {
+        checkConfiguration();
+
+        if(!configuration.preloadEnabled || configuration.taskExecutorForPreload == null) {
+            return;
+        }
+
+        if(TextUtils.isEmpty(uri)) {
+            return;
+        }
+
+        if (options == null) {
+            options = configuration.defaultDisplayImageOptions;
+        }
+
+        if(!options.isCacheOnDisk()) {
+            return;
+        }
+
+        if(engine.getPausedPreload().get()) {
+            return;
+        }
+
+        ImageLoadingInfo imageLoadingInfo = new ImageLoadingInfo(uri, null, null, null, options, listener, null, engine.getLockForUri(uri));
+        PreloadToDiskTask displayTask = new PreloadToDiskTask(engine, imageLoadingInfo, options.getHandler());
+        engine.submit(displayTask);
+    }
 
 	/**
 	 * Checks if ImageLoader's configuration was initialized
@@ -702,10 +731,18 @@ public class ImageLoader {
 		engine.pause();
 	}
 
+    public void pausePreload() {
+        engine.pausePreload();
+    }
+
 	/** Resumes waiting "load&display" tasks */
 	public void resume() {
 		engine.resume();
 	}
+
+    public void resumePreload() {
+        engine.resumePreload();
+    }
 
 	/**
 	 * Cancels all running and scheduled display image tasks.<br />
@@ -752,7 +789,7 @@ public class ImageLoader {
 		private Bitmap loadedImage;
 
 		@Override
-		public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+		public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage, LoadedFrom loadedFrom) {
 			this.loadedImage = loadedImage;
 		}
 

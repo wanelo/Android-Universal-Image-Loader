@@ -194,7 +194,7 @@ public final class DisplayImageOptions {
 		return isSyncLoading;
 	}
 
-	/**
+    /**
 	 * Builder for {@link DisplayImageOptions}
 	 *
 	 * @author Sergey Tarasevich (nostra13[at]gmail[dot]com)

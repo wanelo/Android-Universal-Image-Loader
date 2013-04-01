@@ -37,6 +37,7 @@ public class PauseOnScrollListener implements OnScrollListener {
 
 	private final boolean pauseOnScroll;
 	private final boolean pauseOnFling;
+    private final boolean pausePreloadOnFling;
 	private final OnScrollListener externalListener;
 
 	/**
@@ -47,10 +48,17 @@ public class PauseOnScrollListener implements OnScrollListener {
 	 * @param pauseOnFling  Whether {@linkplain ImageLoader#pause() pause ImageLoader} during fling
 	 */
 	public PauseOnScrollListener(ImageLoader imageLoader, boolean pauseOnScroll, boolean pauseOnFling) {
-		this(imageLoader, pauseOnScroll, pauseOnFling, null);
+		this(imageLoader, pauseOnScroll, pauseOnFling, true, null);
 	}
 
-	/**
+    /**
+     * Constructor
+     */
+    public PauseOnScrollListener(ImageLoader imageLoader, boolean pauseOnScroll, boolean pauseOnFling, boolean pausePreloadOnFling) {
+        this(imageLoader, pauseOnScroll, pauseOnFling, pausePreloadOnFling, null);
+    }
+
+    /**
 	 * Constructor
 	 *
 	 * @param imageLoader    {@linkplain ImageLoader} instance for controlling
@@ -59,11 +67,11 @@ public class PauseOnScrollListener implements OnScrollListener {
 	 * @param customListener Your custom {@link OnScrollListener} for {@linkplain AbsListView list view} which also
 	 *                       will be get scroll events
 	 */
-	public PauseOnScrollListener(ImageLoader imageLoader, boolean pauseOnScroll, boolean pauseOnFling,
-			OnScrollListener customListener) {
+	public PauseOnScrollListener(ImageLoader imageLoader, boolean pauseOnScroll, boolean pauseOnFling, boolean pausePreloadOnFling, OnScrollListener customListener) {
 		this.imageLoader = imageLoader;
 		this.pauseOnScroll = pauseOnScroll;
 		this.pauseOnFling = pauseOnFling;
+        this.pausePreloadOnFling = pausePreloadOnFling;
 		externalListener = customListener;
 	}
 
@@ -71,17 +79,15 @@ public class PauseOnScrollListener implements OnScrollListener {
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
 		switch (scrollState) {
 			case OnScrollListener.SCROLL_STATE_IDLE:
-				imageLoader.resume();
+                if(pauseOnFling || pauseOnScroll) imageLoader.resume();
+                if(pausePreloadOnFling) imageLoader.resumePreload();
 				break;
 			case OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
-				if (pauseOnScroll) {
-					imageLoader.pause();
-				}
+				if (pauseOnScroll) imageLoader.pause();
 				break;
 			case OnScrollListener.SCROLL_STATE_FLING:
-				if (pauseOnFling) {
-					imageLoader.pause();
-				}
+				if (pauseOnFling) imageLoader.pause();
+                if(pausePreloadOnFling) imageLoader.pausePreload();
 				break;
 		}
 		if (externalListener != null) {

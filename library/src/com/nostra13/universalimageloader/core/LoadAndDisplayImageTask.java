@@ -126,7 +126,9 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
 		}
 
 		loadFromUriLock.lock();
-		Bitmap bmp;
+		Bitmap bmp = null;
+        boolean releaseOnCancel = true;
+
 		try {
 			checkTaskNotActual();
 
@@ -149,10 +151,12 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
 				if (bmp != null && options.isCacheInMemory()) {
 					L.d(LOG_CACHE_IMAGE_IN_MEMORY, memoryCacheKey);
 					configuration.memoryCache.put(memoryCacheKey, bmp);
+                    releaseOnCancel = false;
 				}
 			} else {
 				loadedFrom = LoadedFrom.MEMORY_CACHE;
 				L.d(LOG_GET_IMAGE_FROM_MEMORY_CACHE_AFTER_WAITING, memoryCacheKey);
+                releaseOnCancel = false;
 			}
 
 			if (bmp != null && options.shouldPostProcess()) {
@@ -166,12 +170,15 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
 			checkTaskInterrupted();
 		} catch (TaskCancelledException e) {
 			fireCancelEvent();
+            releaseBitmap(bmp, releaseOnCancel);
 			return;
-		} finally {
+		} catch (Throwable t) {
+            releaseBitmap(bmp, releaseOnCancel);
+        } finally {
 			loadFromUriLock.unlock();
 		}
 
-		DisplayBitmapTask displayBitmapTask = new DisplayBitmapTask(bmp, imageLoadingInfo, engine, loadedFrom);
+		DisplayBitmapTask displayBitmapTask = new DisplayBitmapTask(bmp, imageLoadingInfo, engine, loadedFrom, decoder, releaseOnCancel);
 		runTask(displayBitmapTask, syncLoading, handler, engine);
 	}
 
@@ -237,27 +244,38 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
 				bitmap = decodeImage(imageUriForDecoding);
 
 				if (bitmap == null || bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0) {
+                    releaseBitmap(bitmap, true);
 					fireFailEvent(FailType.DECODING_ERROR, null);
 				}
 			}
 		} catch (IllegalStateException e) {
-			fireFailEvent(FailType.NETWORK_DENIED, null);
+            fireFailEvent(FailType.NETWORK_DENIED, null);
+            releaseBitmap(bitmap, true);
+            bitmap = null;
 		} catch (TaskCancelledException e) {
+            releaseBitmap(bitmap, true);
+            bitmap = null;
 			throw e;
 		} catch (IOException e) {
 			L.e(e);
 			fireFailEvent(FailType.IO_ERROR, e);
+            releaseBitmap(bitmap, true);
+            bitmap = null;
 		} catch (OutOfMemoryError e) {
 			L.e(e);
 			fireFailEvent(FailType.OUT_OF_MEMORY, e);
+            releaseBitmap(bitmap, true);
+            bitmap = null;
 		} catch (Throwable e) {
 			L.e(e);
 			fireFailEvent(FailType.UNKNOWN, e);
+            releaseBitmap(bitmap, true);
+            bitmap = null;
 		}
-		return bitmap;
+        return bitmap;
 	}
 
-	private Bitmap decodeImage(String imageUri) throws IOException {
+	private Bitmap decodeImage(String imageUri) throws Throwable {
 		ViewScaleType viewScaleType = imageAware.getScaleType();
 		ImageDecodingInfo decodingInfo = new ImageDecodingInfo(memoryCacheKey, imageUri, uri, targetSize, viewScaleType,
 				getDownloader(), options);
@@ -279,7 +297,7 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
 					resizeAndSaveImage(width, height); // TODO : process boolean result
 				}
 			}
-		} catch (IOException e) {
+		} catch (Throwable e) {
 			L.e(e);
 			loaded = false;
 		}
@@ -292,7 +310,7 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
 	}
 
 	/** Decodes image file into Bitmap, resize it and save it back */
-	private boolean resizeAndSaveImage(int maxWidth, int maxHeight) throws IOException {
+	private boolean resizeAndSaveImage(int maxWidth, int maxHeight) throws Throwable {
 		// Decode image file, compress and re-save it
 		boolean saved = false;
 		File targetFile = configuration.diskCache.get(uri);
@@ -364,7 +382,13 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
 		runTask(r, false, handler, engine);
 	}
 
-	private ImageDownloader getDownloader() {
+    private void releaseBitmap(final Bitmap bitmap, boolean releaseOnCancel) {
+        if(bitmap != null && releaseOnCancel) {
+            decoder.release(bitmap, options);
+        }
+    }
+
+    private ImageDownloader getDownloader() {
 		ImageDownloader d;
 		if (engine.isNetworkDenied()) {
 			d = networkDeniedDownloader;

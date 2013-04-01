@@ -17,6 +17,7 @@ package com.nostra13.universalimageloader.core;
 
 import android.graphics.Bitmap;
 import com.nostra13.universalimageloader.core.assist.LoadedFrom;
+import com.nostra13.universalimageloader.core.decode.ImageDecoder;
 import com.nostra13.universalimageloader.core.display.BitmapDisplayer;
 import com.nostra13.universalimageloader.core.imageaware.ImageAware;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
@@ -44,17 +45,27 @@ final class DisplayBitmapTask implements Runnable {
 	private final ImageLoadingListener listener;
 	private final ImageLoaderEngine engine;
 	private final LoadedFrom loadedFrom;
+    private DisplayImageOptions options;
+    private ImageDecoder imageDecoder;
+    private boolean releaseOnCancel = false;
 
-	public DisplayBitmapTask(Bitmap bitmap, ImageLoadingInfo imageLoadingInfo, ImageLoaderEngine engine,
-			LoadedFrom loadedFrom) {
+    public DisplayBitmapTask(Bitmap bitmap, ImageLoadingInfo imageLoadingInfo, ImageLoaderEngine engine, LoadedFrom loadedFrom, ImageDecoder imageDecoder, boolean releaseOnCancel) {
+        this(bitmap, imageLoadingInfo, engine, loadedFrom);
+        this.releaseOnCancel = releaseOnCancel;
+        this.imageDecoder = imageDecoder;
+    }
+
+	public DisplayBitmapTask(Bitmap bitmap, ImageLoadingInfo imageLoadingInfo, ImageLoaderEngine engine, LoadedFrom loadedFrom) {
 		this.bitmap = bitmap;
 		imageUri = imageLoadingInfo.uri;
 		imageAware = imageLoadingInfo.imageAware;
 		memoryCacheKey = imageLoadingInfo.memoryCacheKey;
 		displayer = imageLoadingInfo.options.getDisplayer();
+        options = imageLoadingInfo.options;
 		listener = imageLoadingInfo.listener;
 		this.engine = engine;
 		this.loadedFrom = loadedFrom;
+
 	}
 
 	@Override
@@ -62,14 +73,16 @@ final class DisplayBitmapTask implements Runnable {
 		if (imageAware.isCollected()) {
 			L.d(LOG_TASK_CANCELLED_IMAGEAWARE_COLLECTED, memoryCacheKey);
 			listener.onLoadingCancelled(imageUri, imageAware.getWrappedView());
+            releaseBitmap();
 		} else if (isViewWasReused()) {
 			L.d(LOG_TASK_CANCELLED_IMAGEAWARE_REUSED, memoryCacheKey);
 			listener.onLoadingCancelled(imageUri, imageAware.getWrappedView());
+            releaseBitmap();
 		} else {
 			L.d(LOG_DISPLAY_IMAGE_IN_IMAGEAWARE, loadedFrom, memoryCacheKey);
 			displayer.display(bitmap, imageAware, loadedFrom);
 			engine.cancelDisplayTaskFor(imageAware);
-			listener.onLoadingComplete(imageUri, imageAware.getWrappedView(), bitmap);
+			listener.onLoadingComplete(imageUri, imageAware.getWrappedView(), bitmap, loadedFrom);
 		}
 	}
 
@@ -78,4 +91,11 @@ final class DisplayBitmapTask implements Runnable {
 		String currentCacheKey = engine.getLoadingUriForView(imageAware);
 		return !memoryCacheKey.equals(currentCacheKey);
 	}
+
+    private void releaseBitmap() {
+        if(bitmap != null && releaseOnCancel) {
+            imageDecoder.release(bitmap, options);
+        }
+    }
+
 }

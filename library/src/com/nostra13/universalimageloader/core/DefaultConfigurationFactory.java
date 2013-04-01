@@ -68,6 +68,12 @@ public class DefaultConfigurationFactory {
 		return Executors.newCachedThreadPool(createThreadFactory(Thread.NORM_PRIORITY, "uil-pool-d-"));
 	}
 
+    public static Executor createNetworkLoadExecutor(int threadPoolSize, int threadPriority, QueueProcessingType tasksProcessingType) {
+//        BlockingDeque<Runnable> queue = new CyclingLinkedBlockingDeque<Runnable>(ImageLoaderConfiguration.Builder.NETWORK_LOAD_QUEUE_CAPACITY);
+//        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 10, TimeUnit.MINUTES, queue, createThreadFactory(threadPriority));
+        return createExecutor(threadPoolSize, threadPriority, tasksProcessingType);
+    }
+
 	/** Creates {@linkplain HashCodeFileNameGenerator default implementation} of FileNameGenerator */
 	public static FileNameGenerator createFileNameGenerator() {
 		return new HashCodeFileNameGenerator();

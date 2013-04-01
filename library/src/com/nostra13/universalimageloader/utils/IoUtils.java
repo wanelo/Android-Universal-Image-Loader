@@ -15,6 +15,8 @@
  *******************************************************************************/
 package com.nostra13.universalimageloader.utils;
 
+import com.nostra13.universalimageloader.core.assist.pool.ByteArrayPool;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,15 +73,23 @@ public final class IoUtils {
 			total = DEFAULT_IMAGE_TOTAL_SIZE;
 		}
 
-		final byte[] bytes = new byte[bufferSize];
+        final byte[] bytes = ByteArrayPool.acquire(DEFAULT_BUFFER_SIZE);
+//		final byte[] bytes = new byte[bufferSize];
 		int count;
-		if (shouldStopLoading(listener, current, total)) return false;
-		while ((count = is.read(bytes, 0, bufferSize)) != -1) {
-			os.write(bytes, 0, count);
-			current += count;
-			if (shouldStopLoading(listener, current, total)) return false;
-		}
-		os.flush();
+        try {
+            if (shouldStopLoading(listener, current, total)) return false;
+
+            while ((count = is.read(bytes, 0, bufferSize)) != -1) {
+                os.write(bytes, 0, count);
+                current += count;
+                if (shouldStopLoading(listener, current, total)) return false;
+            }
+            os.flush();
+        }
+        finally {
+            ByteArrayPool.release(bytes);
+        }
+
 		return true;
 	}
 
@@ -101,13 +111,14 @@ public final class IoUtils {
 	 * @param is Input stream
 	 */
 	public static void readAndCloseStream(InputStream is) {
-		final byte[] bytes = new byte[DEFAULT_BUFFER_SIZE];
+        final byte[] bytes = ByteArrayPool.acquire(DEFAULT_BUFFER_SIZE);
 		try {
 			while (is.read(bytes, 0, DEFAULT_BUFFER_SIZE) != -1) {
 			}
 		} catch (IOException e) {
 			// Do nothing
 		} finally {
+            ByteArrayPool.release(bytes);
 			closeSilently(is);
 		}
 	}

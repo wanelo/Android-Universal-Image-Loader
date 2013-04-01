@@ -17,7 +17,9 @@ package com.nostra13.universalimageloader.core.listener;
 
 import android.graphics.Bitmap;
 import android.view.View;
+
 import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.assist.LoadedFrom;
 
 /**
  * Listener for image loading process.<br />
@@ -50,12 +52,12 @@ public interface ImageLoadingListener {
 
 	/**
 	 * Is called when image is loaded successfully (and displayed in View if one was specified)
-	 *
-	 * @param imageUri    Loaded image URI
+	 *  @param imageUri    Loaded image URI
 	 * @param view        View for image. Can be <b>null</b>.
-	 * @param loadedImage Bitmap of loaded and decoded image
-	 */
-	void onLoadingComplete(String imageUri, View view, Bitmap loadedImage);
+     * @param loadedImage Bitmap of loaded and decoded image
+     * @param loadedFrom
+     */
+	void onLoadingComplete(String imageUri, View view, Bitmap loadedImage, LoadedFrom loadedFrom);
 
 	/**
 	 * Is called when image loading task was cancelled because View for image was reused in newer task

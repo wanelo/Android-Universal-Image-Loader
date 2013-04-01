@@ -3,13 +3,13 @@ bin/
 gen/
 
 # Ant
-build.xml
 local.properties
 
 # Maven
 target/
 pom.xml.*
 release.properties
+library/tmp
 
 # Eclipse
 .classpath
@@ -25,7 +25,6 @@ out/
 
 # Mac 
 .DS_Store
-
 # Ignore gradle files
 .gradle/
 build/

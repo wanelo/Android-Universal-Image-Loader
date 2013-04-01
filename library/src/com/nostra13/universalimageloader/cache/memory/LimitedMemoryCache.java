@@ -41,7 +41,7 @@ public abstract class LimitedMemoryCache extends BaseMemoryCache {
 	private static final int MAX_NORMAL_CACHE_SIZE = MAX_NORMAL_CACHE_SIZE_IN_MB * 1024 * 1024;
 
 	private final int sizeLimit;
-
+    private boolean useSoftmap = true;
 	private final AtomicInteger cacheSize;
 
 	/**
@@ -50,6 +50,11 @@ public abstract class LimitedMemoryCache extends BaseMemoryCache {
 	 * time)
 	 */
 	private final List<Bitmap> hardCache = Collections.synchronizedList(new LinkedList<Bitmap>());
+
+    public LimitedMemoryCache(int sizeLimit, boolean useSoftmap) {
+        this(sizeLimit);
+        this.useSoftmap = useSoftmap;
+    }
 
 	/** @param sizeLimit Maximum size for cache (in bytes) */
 	public LimitedMemoryCache(int sizeLimit) {
@@ -69,10 +74,15 @@ public abstract class LimitedMemoryCache extends BaseMemoryCache {
 		int curCacheSize = cacheSize.get();
 		if (valueSize < sizeLimit) {
 			while (curCacheSize + valueSize > sizeLimit) {
+                int cacheSizeBeforeRemove = cacheSize.get();
 				Bitmap removedValue = removeNext();
+                int cacheSizeAfterRemove = cacheSize.get();
 				if (hardCache.remove(removedValue)) {
 					curCacheSize = cacheSize.addAndGet(-getSize(removedValue));
 				}
+                if(cacheSizeAfterRemove != cacheSizeBeforeRemove) {
+                    curCacheSize = cacheSize.get();
+                }
 			}
 			hardCache.add(value);
 			cacheSize.addAndGet(valueSize);
@@ -80,7 +90,9 @@ public abstract class LimitedMemoryCache extends BaseMemoryCache {
 			putSuccessfully = true;
 		}
 		// Add value to soft cache
-		super.put(key, value);
+        if(useSoftmap) {
+		    super.put(key, value);
+        }
 		return putSuccessfully;
 	}
 

@@ -16,18 +16,27 @@
 package com.nostra13.universalimageloader.core;
 
 import android.view.View;
+
+import com.nostra13.universalimageloader.BuildConfig;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.assist.FlushedInputStream;
+import com.nostra13.universalimageloader.core.assist.deque.BlockingDeque;
+import com.nostra13.universalimageloader.core.assist.deque.CyclingLinkedBlockingDeque;
 import com.nostra13.universalimageloader.core.imageaware.ImageAware;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.nostra13.universalimageloader.utils.L;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -42,14 +51,16 @@ class ImageLoaderEngine {
 	final ImageLoaderConfiguration configuration;
 
 	private Executor taskExecutor;
+    private Executor taskExecutorForPreload;
 	private Executor taskExecutorForCachedImages;
 	private Executor taskDistributor;
 
-	private final Map<Integer, String> cacheKeysForImageAwares = Collections
-			.synchronizedMap(new HashMap<Integer, String>());
+	private final Map<Integer, String> cacheKeysForImageAwares = Collections.synchronizedMap(new HashMap<Integer, String>());
+    private final Set<String> cacheKeysForPreload = Collections.synchronizedSet(new HashSet<String>());
 	private final Map<String, ReentrantLock> uriLocks = new WeakHashMap<String, ReentrantLock>();
 
 	private final AtomicBoolean paused = new AtomicBoolean(false);
+    private final AtomicBoolean pausedPreload = new AtomicBoolean(false);
 	private final AtomicBoolean networkDenied = new AtomicBoolean(false);
 	private final AtomicBoolean slowNetwork = new AtomicBoolean(false);
 
@@ -60,13 +71,25 @@ class ImageLoaderEngine {
 
 		taskExecutor = configuration.taskExecutor;
 		taskExecutorForCachedImages = configuration.taskExecutorForCachedImages;
-
-		taskDistributor = DefaultConfigurationFactory.createTaskDistributor();
+        taskDistributor = createTaskDistributorExecutor();
+        taskExecutorForPreload = configuration.taskExecutorForPreload;
 	}
+
+    private ThreadPoolExecutor createTaskDistributorExecutor() {
+        BlockingDeque<Runnable> taskDistributorQueue = new CyclingLinkedBlockingDeque<Runnable>(ImageLoaderConfiguration.Builder.TASK_DISTRIBUTOR_QUEUE_CAPACITY);
+        ThreadPoolExecutor executor =  new ThreadPoolExecutor(0,
+                10,
+                60L,
+                TimeUnit.SECONDS,
+                taskDistributorQueue);
+
+        return executor;
+//        return Executors.newCachedThreadPool();
+    }
 
 	/** Submits task to execution pool */
 	void submit(final LoadAndDisplayImageTask task) {
-		taskDistributor.execute(new Runnable() {
+        taskDistributor.execute(new Runnable() {
 			@Override
 			public void run() {
 				File image = configuration.diskCache.get(task.getLoadingUri());
@@ -75,11 +98,31 @@ class ImageLoaderEngine {
 				if (isImageCachedOnDisk) {
 					taskExecutorForCachedImages.execute(task);
 				} else {
+                    if(BuildConfig.DEBUG) {
+                        logExecutorStats((ThreadPoolExecutor) taskExecutor);
+                    }
 					taskExecutor.execute(task);
 				}
 			}
 		});
+
+        if(false && BuildConfig.DEBUG) {
+            logExecutorStats((ThreadPoolExecutor) taskDistributor);
+        }
 	}
+
+    void submit(final PreloadToDiskTask task) {
+        if(!configuration.preloadEnabled || configuration.taskExecutorForPreload == null) {
+            return;
+        }
+
+        if(!preparePreloadFor(task.getLoadingUri())) {
+            return;
+        }
+
+        initExecutorsIfNeed();
+        taskExecutorForPreload.execute(task);
+    }
 
 	/** Submits task to execution pool */
 	void submit(ProcessAndDisplayImageTask task) {
@@ -117,6 +160,18 @@ class ImageLoaderEngine {
 	void prepareDisplayTaskFor(ImageAware imageAware, String memoryCacheKey) {
 		cacheKeysForImageAwares.put(imageAware.getId(), memoryCacheKey);
 	}
+
+    boolean preparePreloadFor(String uri) {
+        return cacheKeysForPreload.add(uri);
+    }
+
+    boolean finishPreload(String uri) {
+        return cacheKeysForPreload.remove(uri);
+    }
+
+    boolean isPreloadActive(String uri) {
+        return cacheKeysForPreload.contains(uri);
+    }
 
 	/**
 	 * Cancels the task of loading and displaying image for incoming <b>imageAware</b>.
@@ -183,6 +238,7 @@ class ImageLoaderEngine {
 		}
 
 		cacheKeysForImageAwares.clear();
+        cacheKeysForPreload.clear();
 		uriLocks.clear();
 	}
 
@@ -214,4 +270,38 @@ class ImageLoaderEngine {
 	boolean isSlowNetwork() {
 		return slowNetwork.get();
 	}
+
+    public void pausePreload() {
+        pausedPreload.set(true);
+    }
+
+    public void resumePreload() {
+        synchronized (paused) {
+            pausedPreload.set(false);
+        }
+    }
+
+    public AtomicBoolean getPausedPreload() {
+        return pausedPreload;
+    }
+
+    public int getPreloadQueueSize() {
+        return cacheKeysForPreload.size();
+    }
+
+    private static final void logExecutorStats(ThreadPoolExecutor executor) {
+        StringBuilder builder = new StringBuilder("QS: ");
+        builder.append(executor.getQueue().size());
+        builder.append(" - AC: ");
+        builder.append(executor.getActiveCount());
+        builder.append(" - LC: ");
+        builder.append(executor.getLargestPoolSize());
+        builder.append(" - TC: ");
+        builder.append(executor.getTaskCount());
+        builder.append(" - CC: ");
+        builder.append(executor.getCompletedTaskCount());
+
+        L.d("TaskQueue", builder.toString());
+    }
+
 }

@@ -160,6 +160,7 @@ public class LruDiscCache implements DiskCache {
 			} else {
 				editor.abort();
 			}
+            IoUtils.closeSilently(imageStream);
 		}
 		return copied;
 	}
@@ -235,4 +236,19 @@ public class LruDiscCache implements DiskCache {
 	public void setCompressQuality(int compressQuality) {
 		this.compressQuality = compressQuality;
 	}
+
+    public long getSize() {
+        try{
+            return cache.size();
+        } catch (Throwable t){
+            return 0;
+        }
+    }
+
+    public void setMaxSize(long maxSize) {
+        try {
+            cache.setMaxSize(maxSize);
+        } catch (Throwable t){
+        }
+    }
 }

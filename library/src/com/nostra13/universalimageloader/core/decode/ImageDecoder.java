@@ -17,6 +17,8 @@ package com.nostra13.universalimageloader.core.decode;
 
 import android.graphics.Bitmap;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+
 import java.io.IOException;
 
 /**
@@ -35,5 +37,7 @@ public interface ImageDecoder {
 	 * @return
 	 * @throws IOException
 	 */
-	Bitmap decode(ImageDecodingInfo imageDecodingInfo) throws IOException;
+	Bitmap decode(ImageDecodingInfo imageDecodingInfo) throws Throwable;
+
+    void release(Bitmap bitmap, DisplayImageOptions options);
 }

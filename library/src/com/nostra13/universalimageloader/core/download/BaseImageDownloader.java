@@ -25,8 +25,8 @@ import android.provider.MediaStore;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.assist.ContentLengthInputStream;
 import com.nostra13.universalimageloader.utils.IoUtils;
+import com.nostra13.universalimageloader.core.assist.io.RecyclableBufferedInputStream;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -34,6 +34,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -125,7 +126,7 @@ public class BaseImageDownloader implements ImageDownloader {
 			IoUtils.readAndCloseStream(conn.getErrorStream());
 			throw e;
 		}
-		return new ContentLengthInputStream(new BufferedInputStream(imageStream, BUFFER_SIZE), conn.getContentLength());
+		return new ContentLengthInputStream(new RecyclableBufferedInputStream(imageStream, BUFFER_SIZE), conn.getContentLength());
 	}
 
 	/**
@@ -157,7 +158,7 @@ public class BaseImageDownloader implements ImageDownloader {
 	 */
 	protected InputStream getStreamFromFile(String imageUri, Object extra) throws IOException {
 		String filePath = Scheme.FILE.crop(imageUri);
-		return new ContentLengthInputStream(new BufferedInputStream(new FileInputStream(filePath), BUFFER_SIZE),
+		return new ContentLengthInputStream(new RecyclableBufferedInputStream(new FileInputStream(filePath), BUFFER_SIZE),
 				(int) new File(filePath).length());
 	}
 
@@ -244,4 +245,5 @@ public class BaseImageDownloader implements ImageDownloader {
 
 		return mimeType.startsWith("video/");
 	}
+
 }

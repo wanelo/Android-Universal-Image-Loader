@@ -59,8 +59,11 @@ public final class ImageLoaderConfiguration {
 
 	final Executor taskExecutor;
 	final Executor taskExecutorForCachedImages;
+    final Executor taskExecutorForPreload;
+
 	final boolean customExecutor;
 	final boolean customExecutorForCachedImages;
+    final boolean preloadEnabled;
 
 	final int threadPoolSize;
 	final int threadPriority;
@@ -84,6 +87,7 @@ public final class ImageLoaderConfiguration {
 		processorForDiskCache = builder.processorForDiskCache;
 		taskExecutor = builder.taskExecutor;
 		taskExecutorForCachedImages = builder.taskExecutorForCachedImages;
+        taskExecutorForPreload = builder.taskExecutorForPreload;
 		threadPoolSize = builder.threadPoolSize;
 		threadPriority = builder.threadPriority;
 		tasksProcessingType = builder.tasksProcessingType;
@@ -95,6 +99,8 @@ public final class ImageLoaderConfiguration {
 
 		customExecutor = builder.customExecutor;
 		customExecutorForCachedImages = builder.customExecutorForCachedImages;
+
+        preloadEnabled = builder.preloadEnabled;
 
 		networkDeniedDownloader = new NetworkDeniedImageDownloader(downloader);
 		slowNetworkDownloader = new SlowNetworkImageDownloader(downloader);
@@ -158,8 +164,17 @@ public final class ImageLoaderConfiguration {
 		public static final int DEFAULT_THREAD_POOL_SIZE = 3;
 		/** {@value} */
 		public static final int DEFAULT_THREAD_PRIORITY = Thread.NORM_PRIORITY - 1;
+
+        /** {@value} */
+        public static final int PRELOAD_THREAD_POOL_SIZE = 1;
+        /** {@value} */
+        public static final int PRELOAD_THREAD_PRIORITY = Thread.NORM_PRIORITY - 2;
+
 		/** {@value} */
 		public static final QueueProcessingType DEFAULT_TASK_PROCESSING_TYPE = QueueProcessingType.FIFO;
+
+        public static final int TASK_DISTRIBUTOR_QUEUE_CAPACITY = 100;
+        public static final int NETWORK_LOAD_QUEUE_CAPACITY = 50;
 
 		private Context context;
 
@@ -171,11 +186,17 @@ public final class ImageLoaderConfiguration {
 
 		private Executor taskExecutor = null;
 		private Executor taskExecutorForCachedImages = null;
+        private Executor taskExecutorForPreload = null;
 		private boolean customExecutor = false;
 		private boolean customExecutorForCachedImages = false;
 
 		private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
 		private int threadPriority = DEFAULT_THREAD_PRIORITY;
+
+        private int threadPriorityForPreload = PRELOAD_THREAD_PRIORITY;
+        private int threadPoolSizeForPreload = PRELOAD_THREAD_POOL_SIZE;
+        private boolean preloadEnabled = false;
+
 		private boolean denyCacheImageMultipleSizesInMemory = false;
 		private QueueProcessingType tasksProcessingType = DEFAULT_TASK_PROCESSING_TYPE;
 
@@ -321,7 +342,39 @@ public final class ImageLoaderConfiguration {
 			return this;
 		}
 
-		/**
+        public Builder threadPoolSizeForPreload(int threadPoolSize) {
+            if (taskExecutorForPreload != null) {
+                L.w(WARNING_OVERLAP_EXECUTOR);
+            }
+
+            this.threadPoolSizeForPreload = threadPoolSize;
+            return this;
+        }
+
+
+        public Builder threadPriorityForPreload(int threadPriority) {
+            if (taskExecutorForPreload != null) {
+                L.w(WARNING_OVERLAP_EXECUTOR);
+            }
+
+            if (threadPriority < Thread.MIN_PRIORITY) {
+                this.threadPriorityForPreload = Thread.MIN_PRIORITY;
+            } else {
+                if (threadPriority > Thread.MAX_PRIORITY) {
+                    this.threadPriorityForPreload = Thread.MAX_PRIORITY;
+                } else {
+                    this.threadPriorityForPreload = threadPriority;
+                }
+            }
+            return this;
+        }
+
+        public Builder preloadEnabled(boolean preloadEnabled) {
+            this.preloadEnabled = preloadEnabled;
+            return this;
+        }
+
+        /**
 		 * When you display an image in a small {@link android.widget.ImageView ImageView} and later you try to display
 		 * this image (from identical URI) in a larger {@link android.widget.ImageView ImageView} so decoded image of
 		 * bigger size will be cached in memory as a previous decoded image of smaller size.<br />
@@ -563,7 +616,7 @@ public final class ImageLoaderConfiguration {
 		private void initEmptyFieldsWithDefaultValues() {
 			if (taskExecutor == null) {
 				taskExecutor = DefaultConfigurationFactory
-						.createExecutor(threadPoolSize, threadPriority, tasksProcessingType);
+						.createNetworkLoadExecutor(threadPoolSize, threadPriority, tasksProcessingType);
 			} else {
 				customExecutor = true;
 			}
@@ -573,9 +626,14 @@ public final class ImageLoaderConfiguration {
 			} else {
 				customExecutorForCachedImages = true;
 			}
-			if (diskCache == null) {
-				if (diskCacheFileNameGenerator == null) {
-					diskCacheFileNameGenerator = DefaultConfigurationFactory.createFileNameGenerator();
+
+            if (taskExecutorForPreload == null && preloadEnabled) {
+                taskExecutorForPreload = DefaultConfigurationFactory.createExecutor(threadPoolSizeForPreload, threadPriorityForPreload, tasksProcessingType);
+            }
+
+            if (diskCache == null) {
+                if (diskCacheFileNameGenerator == null) {
+                    diskCacheFileNameGenerator = DefaultConfigurationFactory.createFileNameGenerator();
 				}
 				diskCache = DefaultConfigurationFactory
 						.createDiskCache(context, diskCacheFileNameGenerator, diskCacheSize, diskCacheFileCount);
