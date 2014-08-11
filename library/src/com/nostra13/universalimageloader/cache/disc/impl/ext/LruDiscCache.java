@@ -18,6 +18,7 @@ package com.nostra13.universalimageloader.cache.disc.impl.ext;
 import android.graphics.Bitmap;
 import com.nostra13.universalimageloader.cache.disc.DiskCache;
 import com.nostra13.universalimageloader.cache.disc.naming.FileNameGenerator;
+import com.nostra13.universalimageloader.core.assist.io.RecyclableBufferedOutputStream;
 import com.nostra13.universalimageloader.utils.IoUtils;
 import com.nostra13.universalimageloader.utils.L;
 
@@ -149,7 +150,7 @@ public class LruDiscCache implements DiskCache {
 			return false;
 		}
 
-		OutputStream os = new BufferedOutputStream(editor.newOutputStream(0), bufferSize);
+		OutputStream os = new RecyclableBufferedOutputStream(editor.newOutputStream(0), bufferSize);
 		boolean copied = false;
 		try {
 			copied = IoUtils.copyStream(imageStream, os, listener, bufferSize);
@@ -172,7 +173,7 @@ public class LruDiscCache implements DiskCache {
 			return false;
 		}
 
-		OutputStream os = new BufferedOutputStream(editor.newOutputStream(0), bufferSize);
+		OutputStream os = new RecyclableBufferedOutputStream(editor.newOutputStream(0), bufferSize);
 		boolean savedSuccessfully = false;
 		try {
 			savedSuccessfully = bitmap.compress(compressFormat, compressQuality, os);
