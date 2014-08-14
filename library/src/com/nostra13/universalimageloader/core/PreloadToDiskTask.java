@@ -17,6 +17,8 @@ package com.nostra13.universalimageloader.core;
 
 import android.graphics.Bitmap;
 import android.os.Handler;
+import android.util.Log;
+import android.view.View;
 
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.assist.FailReason.FailType;
@@ -41,15 +43,16 @@ import java.util.concurrent.locks.ReentrantLock;
 
 final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
 
-    private static final String LOG_WAITING_FOR_RESUME = "ImageLoader is paused. Waiting...  [%s]";
-    private static final String LOG_RESUME_AFTER_PAUSE = ".. Resume loading [%s]";
-    private static final String LOG_DELAY_BEFORE_LOADING = "Delay %d ms before loading...  [%s]";
+    private static final String LOG_WAITING_FOR_RESUME = "Preload ImageLoader is paused. Waiting...  [%s]";
+    private static final String LOG_RESUME_AFTER_PAUSE = "Preload .. Resume loading [%s]";
+    private static final String LOG_DELAY_BEFORE_LOADING = "Preload Delay %d ms before loading...  [%s]";
     private static final String LOG_START_DISPLAY_IMAGE_TASK = "Start preload image task [%s]";
     private static final String LOG_LOAD_IMAGE_FROM_NETWORK = "PreLoad image from network [%s]";
-    private static final String LOG_RESIZE_CACHED_IMAGE_FILE = "Resize image in disk cache [%s]";
-    private static final String LOG_CACHE_IMAGE_ON_DISK = "Cache image on disk [%s]";
-    private static final String LOG_PROCESS_IMAGE_BEFORE_CACHE_ON_DISK = "Process image before cache on disk [%s]";
-    private static final String LOG_TASK_INTERRUPTED = "Task was interrupted [%s]";
+    private static final String LOG_RESIZE_CACHED_IMAGE_FILE = "Preload Resize image in disk cache [%s]";
+    private static final String LOG_CACHE_IMAGE_ON_DISK = "Preload Cache image on disk [%s]";
+    private static final String DIDNT_LOG_CACHE_IMAGE_ON_DISK = "DID NOT Preload Cache image on disk [%s]";
+    private static final String LOG_PROCESS_IMAGE_BEFORE_CACHE_ON_DISK = "Preload Process image before cache on disk [%s]";
+    private static final String LOG_TASK_INTERRUPTED = "Preload Task was interrupted [%s]";
 
     private static final String ERROR_PROCESSOR_FOR_DISK_CACHE_NULL = "Bitmap processor for disk cache returned null [%s]";
 
@@ -90,7 +93,7 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
 
     @Override
     public void run() {
-        if(options.isCacheOnDisk()) {
+        if(!options.isCacheOnDisk()) {
             cleanPreloadLock();
             return;
         }
@@ -110,8 +113,10 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
             return;
         }
 
-        boolean isImageCachedOnDisc = configuration.diskCache.get(uri).exists();
-        if(!engine.isPreloadActive(uri) || isImageCachedOnDisc){
+        File file = configuration.diskCache.get(uri);
+
+        boolean cachedOnDisk = (file != null) && file.exists();
+        if(!engine.isPreloadActive(uri) || cachedOnDisk){
             cleanPreloadLock();
             return;
         }
@@ -126,11 +131,8 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
         loadFromUriLock.lock();
 
         try {
-            File imageFile = configuration.diskCache.get(uri);
-            if (imageFile == null && !imageFile.exists()) {
-                L.d(LOG_LOAD_IMAGE_FROM_NETWORK, memoryCacheKey);
-                tryCacheImageOnDisk();
-            }
+            L.d(LOG_LOAD_IMAGE_FROM_NETWORK, memoryCacheKey);
+            tryCacheImageOnDisk();
         } catch (IllegalStateException e) {
             fireFailEvent(FailType.NETWORK_DENIED, null);
         } catch (OutOfMemoryError e) {
@@ -192,12 +194,12 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
 
     /** @return <b>true</b> - if image was downloaded successfully; <b>false</b> - otherwise */
     private boolean tryCacheImageOnDisk() throws TaskCancelledException {
-        L.d(LOG_CACHE_IMAGE_ON_DISK, memoryCacheKey);
-
         boolean loaded;
         try {
             loaded = downloadImage();
             if (loaded) {
+                L.d(LOG_CACHE_IMAGE_ON_DISK, memoryCacheKey);
+                Log.e("IMAGE", "Preloaded and saved " + uri);
                 int width = configuration.maxImageWidthForDiskCache;
                 int height = configuration.maxImageHeightForDiskCache;
                 if (width > 0 || height > 0) {
@@ -209,6 +211,11 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
             L.e(e);
             loaded = false;
         }
+
+        if(!loaded) {
+            L.d(DIDNT_LOG_CACHE_IMAGE_ON_DISK, memoryCacheKey);
+        }
+        
         return loaded;
     }
 
@@ -248,7 +255,7 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
 
     @Override
     public boolean onBytesCopied(int current, int total) {
-        return false;
+        return true;
     }
 
     private void fireFailEvent(final FailType failType, final Throwable failCause) {
@@ -259,7 +266,11 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
                 if (options.shouldShowImageOnFail()) {
                     imageAware.setImageDrawable(options.getImageOnFail(configuration.resources));
                 }
-                listener.onLoadingFailed(uri, imageAware.getWrappedView(), new FailReason(failType, failCause));
+
+                View view = imageAware != null ? imageAware.getWrappedView() : null;
+                if(listener != null) {
+                    listener.onLoadingFailed(uri, view, new FailReason(failType, failCause));
+                }
             }
         };
         runTask(r, false, handler, engine);
