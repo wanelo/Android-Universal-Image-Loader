@@ -199,7 +199,6 @@ final class PreloadToDiskTask implements Runnable, IoUtils.CopyListener {
             loaded = downloadImage();
             if (loaded) {
                 L.d(LOG_CACHE_IMAGE_ON_DISK, memoryCacheKey);
-                Log.e("IMAGE", "Preloaded and saved " + uri);
                 int width = configuration.maxImageWidthForDiskCache;
                 int height = configuration.maxImageHeightForDiskCache;
                 if (width > 0 || height > 0) {
