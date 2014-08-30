@@ -11,15 +11,18 @@ import org.apache.http.client.methods.HttpGet;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 public class OkHttpImageDownloader extends BaseImageDownloader {
 
     private OkHttpClient client;
     private OkUrlFactory urlFactory;
 
-    public OkHttpImageDownloader(Context context) {
+    public OkHttpImageDownloader(Context context, int connectTimeoutSeconds, int readTimeOutSeconds) {
         super(context);
         this.client = new OkHttpClient();
+        client.setReadTimeout(readTimeOutSeconds, TimeUnit.SECONDS);
+        client.setConnectTimeout(connectTimeoutSeconds, TimeUnit.SECONDS);
         urlFactory = new OkUrlFactory(client);
     }
 
