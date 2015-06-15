@@ -84,6 +84,7 @@ import java.util.regex.Pattern;
  * Callers should handle other problems by catching {@code IOException} and
  * responding appropriately.
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 final class DiskLruCache implements Closeable {
 	static final String JOURNAL_FILE = "journal";
 	static final String JOURNAL_FILE_TEMP = "journal.tmp";
@@ -149,7 +150,7 @@ final class DiskLruCache implements Closeable {
 	private int fileCount = 0;
 	private Writer journalWriter;
 	private final LinkedHashMap<String, Entry> lruEntries =
-			new LinkedHashMap<String, Entry>(0, 0.75f, true);
+			new LinkedHashMap<>(0, 0.75f, true);
 	private int redundantOpCount;
 
 	/**
@@ -656,7 +657,7 @@ final class DiskLruCache implements Closeable {
 		if (journalWriter == null) {
 			return; // Already closed.
 		}
-		for (Entry entry : new ArrayList<Entry>(lruEntries.values())) {
+		for (Entry entry : new ArrayList<>(lruEntries.values())) {
 			if (entry.currentEditor != null) {
 				entry.currentEditor.abort();
 			}

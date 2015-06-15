@@ -57,7 +57,7 @@ public abstract class BaseMemoryCache implements MemoryCache {
 	@Override
 	public Collection<String> keys() {
 		synchronized (softMap) {
-			return new HashSet<String>(softMap.keySet());
+			return new HashSet<>(softMap.keySet());
 		}
 	}
 

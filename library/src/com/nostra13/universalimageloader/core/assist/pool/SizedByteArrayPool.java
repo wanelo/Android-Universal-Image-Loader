@@ -11,8 +11,8 @@ public class SizedByteArrayPool {
 
     public static final int DEFAULT_BUFFER_SIZE = 32 * 1024; // 32 Kb
 
-    private static List<byte[]> mBuffersByLastUse = new LinkedList<byte[]>();
-    private static List<byte[]> mBuffersBySize = new ArrayList<byte[]>(64);
+    private static List<byte[]> mBuffersByLastUse = new LinkedList<>();
+    private static List<byte[]> mBuffersBySize = new ArrayList<>(64);
     private static int mCurrentSize = 0;
     private static int mSizeLimit = 2 * 1024 * 1024; //2MB
 

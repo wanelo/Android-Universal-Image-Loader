@@ -57,7 +57,7 @@ class ImageLoaderEngine {
 
 	private final Map<Integer, String> cacheKeysForImageAwares = Collections.synchronizedMap(new HashMap<Integer, String>());
     private final Set<String> cacheKeysForPreload = Collections.synchronizedSet(new HashSet<String>());
-	private final Map<String, ReentrantLock> uriLocks = new WeakHashMap<String, ReentrantLock>();
+	private final Map<String, ReentrantLock> uriLocks = new WeakHashMap<>();
 
 	private final AtomicBoolean paused = new AtomicBoolean(false);
     private final AtomicBoolean pausedPreload = new AtomicBoolean(false);
@@ -76,7 +76,7 @@ class ImageLoaderEngine {
 	}
 
     private ThreadPoolExecutor createTaskDistributorExecutor() {
-        BlockingDeque<Runnable> taskDistributorQueue = new CyclingLinkedBlockingDeque<Runnable>(ImageLoaderConfiguration.Builder.TASK_DISTRIBUTOR_QUEUE_CAPACITY);
+        BlockingDeque<Runnable> taskDistributorQueue = new CyclingLinkedBlockingDeque<>(ImageLoaderConfiguration.Builder.TASK_DISTRIBUTOR_QUEUE_CAPACITY);
         ThreadPoolExecutor executor =  new ThreadPoolExecutor(0,
                 10,
                 60L,
@@ -106,9 +106,9 @@ class ImageLoaderEngine {
 			}
 		});
 
-        if(false && BuildConfig.DEBUG) {
-            logExecutorStats((ThreadPoolExecutor) taskDistributor);
-        }
+//        if(false && BuildConfig.DEBUG) {
+//            logExecutorStats((ThreadPoolExecutor) taskDistributor);
+//        }
 	}
 
     void submit(final PreloadToDiskTask task) {

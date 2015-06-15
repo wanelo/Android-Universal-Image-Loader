@@ -98,6 +98,7 @@ public abstract class BaseDiscCache implements DiskCache {
 		return getFile(imageUri);
 	}
 
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	@Override
 	public boolean save(String imageUri, InputStream imageStream, IoUtils.CopyListener listener) throws IOException {
 		File imageFile = getFile(imageUri);
@@ -122,6 +123,7 @@ public abstract class BaseDiscCache implements DiskCache {
 		return loaded;
 	}
 
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	@Override
 	public boolean save(String imageUri, Bitmap bitmap) throws IOException {
 		File imageFile = getFile(imageUri);
@@ -153,6 +155,7 @@ public abstract class BaseDiscCache implements DiskCache {
 		// Nothing to do
 	}
 
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	@Override
 	public void clear() {
 		File[] files = cacheDir.listFiles();

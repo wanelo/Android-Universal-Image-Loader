@@ -17,7 +17,6 @@ package com.nostra13.universalimageloader.core;
 
 import android.graphics.Bitmap;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 
 import com.nostra13.universalimageloader.core.assist.FailReason;

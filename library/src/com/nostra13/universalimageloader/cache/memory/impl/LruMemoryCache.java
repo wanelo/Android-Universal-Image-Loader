@@ -33,7 +33,7 @@ public class LruMemoryCache implements MemoryCache {
 			throw new IllegalArgumentException("maxSize <= 0");
 		}
 		this.maxSize = maxSize;
-		this.map = new LinkedHashMap<String, Bitmap>(0, 0.75f, true);
+		this.map = new LinkedHashMap<>(0, 0.75f, true);
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class LruMemoryCache implements MemoryCache {
 	@Override
 	public Collection<String> keys() {
 		synchronized (this) {
-			return new HashSet<String>(map.keySet());
+			return new HashSet<>(map.keySet());
 		}
 	}
 

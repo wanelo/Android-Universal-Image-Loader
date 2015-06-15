@@ -117,6 +117,6 @@ public class UsingFreqLimitedMemoryCache extends LimitedMemoryCache {
 
 	@Override
 	protected Reference<Bitmap> createReference(Bitmap value) {
-		return new WeakReference<Bitmap>(value);
+		return new WeakReference<>(value);
 	}
 }

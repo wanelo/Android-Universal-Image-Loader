@@ -105,7 +105,7 @@ public class BaseImageDecoder implements ImageDecoder {
         }
 
 //		ExifInfo exif;
-		String imageUri = decodingInfo.getImageUri();
+//		String imageUri = decodingInfo.getImageUri();
 //		if (decodingInfo.shouldConsiderExifParams() && canDefineExifParams(imageUri, options.outMimeType)) {
 //			exif = defineExifOrientation(imageUri);
 //		} else {

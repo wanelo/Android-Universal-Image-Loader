@@ -34,6 +34,7 @@ public class ImageSize {
 		this.height = height;
 	}
 
+	@SuppressWarnings("SuspiciousNameCombination")
 	public ImageSize(int width, int height, int rotation) {
 		if (rotation % 180 == 0) {
 			this.width = width;

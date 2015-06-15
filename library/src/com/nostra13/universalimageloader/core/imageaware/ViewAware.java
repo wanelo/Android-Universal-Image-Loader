@@ -69,7 +69,7 @@ public abstract class ViewAware implements ImageAware {
 	public ViewAware(View view, boolean checkActualViewSize) {
 		if (view == null) throw new IllegalArgumentException("view must not be null");
 
-		this.viewRef = new WeakReference<View>(view);
+		this.viewRef = new WeakReference<>(view);
 		this.checkActualViewSize = checkActualViewSize;
 	}
 

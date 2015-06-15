@@ -113,6 +113,7 @@ public final class IoUtils {
 	public static void readAndCloseStream(InputStream is) {
         final byte[] bytes = ByteArrayPool.acquire(DEFAULT_BUFFER_SIZE);
 		try {
+			//noinspection StatementWithEmptyBody
 			while (is.read(bytes, 0, DEFAULT_BUFFER_SIZE) != -1) {
 			}
 		} catch (IOException e) {

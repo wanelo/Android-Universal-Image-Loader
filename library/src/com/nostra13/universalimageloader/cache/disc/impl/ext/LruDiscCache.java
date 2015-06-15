@@ -22,7 +22,6 @@ import com.nostra13.universalimageloader.core.assist.io.RecyclableBufferedOutput
 import com.nostra13.universalimageloader.utils.IoUtils;
 import com.nostra13.universalimageloader.utils.L;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;

@@ -169,7 +169,7 @@ public class LinkedBlockingDeque<E>
             for (E e : c) {
                 if (e == null)
                     throw new NullPointerException();
-                if (!linkLast(new Node<E>(e)))
+                if (!linkLast(new Node<>(e)))
                     throw new IllegalStateException("Deque full");
             }
         } finally {
@@ -309,7 +309,7 @@ public class LinkedBlockingDeque<E>
      */
     public boolean offerFirst(E e) {
         if (e == null) throw new NullPointerException();
-        Node<E> node = new Node<E>(e);
+        Node<E> node = new Node<>(e);
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
@@ -324,7 +324,7 @@ public class LinkedBlockingDeque<E>
      */
     public boolean offerLast(E e) {
         if (e == null) throw new NullPointerException();
-        Node<E> node = new Node<E>(e);
+        Node<E> node = new Node<>(e);
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
@@ -340,7 +340,7 @@ public class LinkedBlockingDeque<E>
      */
     public void putFirst(E e) throws InterruptedException {
         if (e == null) throw new NullPointerException();
-        Node<E> node = new Node<E>(e);
+        Node<E> node = new Node<>(e);
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
@@ -357,7 +357,7 @@ public class LinkedBlockingDeque<E>
      */
     public void putLast(E e) throws InterruptedException {
         if (e == null) throw new NullPointerException();
-        Node<E> node = new Node<E>(e);
+        Node<E> node = new Node<>(e);
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
@@ -375,7 +375,7 @@ public class LinkedBlockingDeque<E>
     public boolean offerFirst(E e, long timeout, TimeUnit unit)
         throws InterruptedException {
         if (e == null) throw new NullPointerException();
-        Node<E> node = new Node<E>(e);
+        Node<E> node = new Node<>(e);
         long nanos = unit.toNanos(timeout);
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
@@ -398,7 +398,7 @@ public class LinkedBlockingDeque<E>
     public boolean offerLast(E e, long timeout, TimeUnit unit)
         throws InterruptedException {
         if (e == null) throw new NullPointerException();
-        Node<E> node = new Node<E>(e);
+        Node<E> node = new Node<>(e);
         long nanos = unit.toNanos(timeout);
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();

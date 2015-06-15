@@ -10,7 +10,7 @@ public class ByteArrayPool {
 
     public static int MAX_SIZE = 20;
     public static final int DEFAULT_BUFFER_SIZE = 32 * 1024; // 32 Kb
-    private static final Queue<byte[]> queue = new LinkedList<byte[]>();
+    private static final Queue<byte[]> queue = new LinkedList<>();
 
     public static synchronized  byte[] acquire(int size) {
         return acquire();

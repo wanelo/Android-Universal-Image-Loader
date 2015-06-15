@@ -65,7 +65,7 @@ public final class MemoryCacheUtils {
 	 * denyCacheImageMultipleSizesInMemory()} option in {@linkplain ImageLoaderConfiguration configuration}
 	 */
 	public static List<Bitmap> findCachedBitmapsForImageUri(String imageUri, MemoryCache memoryCache) {
-		List<Bitmap> values = new ArrayList<Bitmap>();
+		List<Bitmap> values = new ArrayList<>();
 		for (String key : memoryCache.keys()) {
 			if (key.startsWith(imageUri)) {
 				values.add(memoryCache.get(key));
@@ -81,7 +81,7 @@ public final class MemoryCacheUtils {
 	 * denyCacheImageMultipleSizesInMemory()} option in {@linkplain ImageLoaderConfiguration configuration}
 	 */
 	public static List<String> findCacheKeysForImageUri(String imageUri, MemoryCache memoryCache) {
-		List<String> values = new ArrayList<String>();
+		List<String> values = new ArrayList<>();
 		for (String key : memoryCache.keys()) {
 			if (key.startsWith(imageUri)) {
 				values.add(key);
@@ -97,7 +97,7 @@ public final class MemoryCacheUtils {
 	 * denyCacheImageMultipleSizesInMemory()} option in {@linkplain ImageLoaderConfiguration configuration}
 	 */
 	public static void removeFromCache(String imageUri, MemoryCache memoryCache) {
-		List<String> keysToRemove = new ArrayList<String>();
+		List<String> keysToRemove = new ArrayList<>();
 		for (String key : memoryCache.keys()) {
 			if (key.startsWith(imageUri)) {
 				keysToRemove.add(key);

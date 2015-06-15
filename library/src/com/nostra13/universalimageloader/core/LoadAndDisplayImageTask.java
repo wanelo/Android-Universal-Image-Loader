@@ -254,7 +254,6 @@ final class LoadAndDisplayImageTask implements Runnable, IoUtils.CopyListener {
             bitmap = null;
 		} catch (TaskCancelledException e) {
             releaseBitmap(bitmap, true);
-            bitmap = null;
 			throw e;
 		} catch (IOException e) {
 			L.e(e);
