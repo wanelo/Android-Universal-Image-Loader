@@ -6,8 +6,6 @@ import android.net.Uri;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 
-import org.apache.http.client.methods.HttpGet;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,7 +32,7 @@ public class OkHttpImageDownloader extends BaseImageDownloader {
         connection.setConnectTimeout(this.connectTimeout);
         connection.setReadTimeout(this.readTimeout);
         connection.setInstanceFollowRedirects(true);
-        connection.setRequestMethod(HttpGet.METHOD_NAME);
+        connection.setRequestMethod("GET");
 
         return connection;
     }
