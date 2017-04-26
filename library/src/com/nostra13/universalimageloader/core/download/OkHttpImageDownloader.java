@@ -8,6 +8,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 
@@ -15,11 +16,14 @@ public class OkHttpImageDownloader extends BaseImageDownloader {
 
     private OkUrlFactory factory;
 
-    public OkHttpImageDownloader(Context context, int connectTimeoutSeconds, int readTimeOutSeconds) {
+    public OkHttpImageDownloader(Context context, int connectTimeoutSeconds, int readTimeOutSeconds, Interceptor interceptor) {
         super(context);
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.readTimeout(readTimeOutSeconds, TimeUnit.SECONDS);
         builder.connectTimeout(connectTimeoutSeconds, TimeUnit.SECONDS);
+        if (interceptor != null) {
+            builder.addInterceptor(interceptor);
+        }
         OkHttpClient client = builder.build();
         factory = new OkUrlFactory(client);
     }
@@ -36,4 +40,5 @@ public class OkHttpImageDownloader extends BaseImageDownloader {
 
         return connection;
     }
+
 }
